@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratorio de código</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#141c30;--panel2:#1b2740;--line:#2a3854;--text:#edf3ff;--muted:#9eacc5;--accent:#70a5ff;--green:#63d6a2}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:22px clamp(16px,4vw,42px);border-bottom:1px solid var(--line);background:#10182a}
+h1{font-size:clamp(1.35rem,3vw,2rem);margin:0 0 4px}header p{margin:0;color:var(--muted)}
+main{padding:20px clamp(12px,3vw,32px);max-width:1600px;margin:auto}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+button{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 14px;border-radius:9px;font-weight:650;cursor:pointer}
+button:hover{border-color:var(--accent)}button.primary{background:var(--accent);color:#081326;border-color:var(--accent)}
+button.good{background:#174b3b;border-color:#286e55}.spacer{flex:1}
+.status{font-size:13px;color:var(--muted)}
+.workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:13px;overflow:hidden;min-width:0}
+.panel-head{padding:11px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.panel-head strong{font-size:14px}.editors{display:grid;grid-template-rows:1.2fr 1fr 1fr;gap:1px;background:var(--line)}
+.editor{background:#0e1525;min-height:155px;display:flex;flex-direction:column}
+.editor label{padding:7px 12px;color:var(--muted);font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+textarea{width:100%;flex:1;resize:vertical;min-height:115px;border:0;outline:0;padding:12px;background:#0e1525;color:#e5edff;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:2}
+iframe{display:block;width:100%;height:570px;background:white;border:0}
+.console{height:135px;overflow:auto;padding:10px 13px;background:#080d18;color:#cbd7ec;font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap}
+.console .error{color:#ff9b9b}.console .info{color:#9eacc5}
+.note{color:var(--muted);font-size:12px;margin:12px 2px 0}
+@media(max-width:850px){.workspace{grid-template-columns:1fr}.editors{grid-template-rows:repeat(3,minmax(170px,auto))}iframe{height:430px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Laboratorio de código</h1>
+  <p>Escribe, ejecuta y prueba pequeños proyectos directamente en tu navegador.</p>
+</header>
+<main>
+  <div class="toolbar">
+    <button class="primary" id="run">▶ Ejecutar código</button>
+    <button id="example">Cargar ejemplo</button>
+    <button id="clear">Limpiar</button>
+    <button class="good" id="download">Descargar proyecto</button>
+    <span class="spacer"></span><span class="status" id="status">Listo para probar</span>
+  </div>
+  <div class="workspace">
+    <section class="panel">
+      <div class="panel-head"><strong>✍️ Editor</strong><span class="status">HTML · CSS · JavaScript</span></div>
+      <div class="editors">
+        <div class="editor"><label for="html">HTML</label><textarea id="html" spellcheck="false"><main class="card">
+  <h1>¡Hola, Luis!</h1>
+  <p>Este es tu laboratorio de pruebas.</p>
+  <button id="saludar">Probar botón</button>
+  <p id="resultado"></p>
+</main></textarea></div>
+        <div class="editor"><label for="css">CSS</label><textarea id="css" spellcheck="false">body {
+  font-family: system-ui, sans-serif;
+  background: #eef3ff;
+  display: grid;
+  place-items: center;
+  min-height: 90vh;
+}
+.card {
+  background: white;
+  padding: 2rem;
+  border-radius: 18px;
+  box-shadow: 0 12px 35px #24365b22;
+  text-align: center;
+}
+button { padding: .7rem 1rem; cursor: pointer; }</textarea></div>
+        <div class="editor"><label for="js">JavaScript</label><textarea id="js" spellcheck="false">document.querySelector("#saludar").addEventListener("click", () => {
+  document.querySelector("#resultado").textContent = "¡Funciona! Ya ejecutaste JavaScript.";
+  console.log("Prueba completada correctamente");
+});</textarea></div>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><strong>Vista previa</strong><span class="status">Salida del programa</span></div>
+      <iframe id="preview" title="Vista previa del código" sandbox="allow-scripts"></iframe>
+      <div class="panel-head"><strong>Consola</strong><span class="status">Mensajes y errores</span></div>
+      <div class="console" id="console" aria-live="polite">La salida de console.log() y los errores aparecerán aquí.</div>
+    </section>
+  </div>
+  <p class="note">Este laboratorio ejecuta HTML, CSS y JavaScript en una vista aislada del navegador. No ejecuta Python, C, Java ni instala paquetes. Evita pegar código desconocido: el código se ejecuta en tu propio navegador.</p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const starter = {
+ html: `<main class="card">
+  <h1>¡Hola, Luis!</h1>
+  <p>Este es tu laboratorio de pruebas.</p>
+  <button id="saludar">Probar botón</button>
+  <p id="resultado"></p>
+</main>`,
+ css: `body { font-family: system-ui, sans-serif; background: #eef3ff; display: grid; place-items: center; min-height: 90vh; }
+.card { background: white; padding: 2rem; border-radius: 18px; box-shadow: 0 12px 35px #24365b22; text-align: center; }
+button { padding: .7rem 1rem; cursor: pointer; }`,
+ js: `document.querySelector("#saludar").addEventListener("click", () => {
+  document.querySelector("#resultado").textContent = "¡Funciona! Ya ejecutaste JavaScript.";
+  console.log("Prueba completada correctamente");
+});`
+};
+function run(){
+ const output = $("console"); output.textContent = "";
+ $("status").textContent = "Ejecutando…";
+ const safe = s => s.replace(/<\/script/gi, "<\\/script");
+ const bridge = `<script>
+ const send=(type,args)=>parent.postMessage({labConsole:true,type,args},'*');
+ const oldLog=console.log, oldWarn=console.warn, oldError=console.error;
+ console.log=(...a)=>{oldLog(...a);send('log',a)};
+ console.warn=(...a)=>{oldWarn(...a);send('warn',a)};
+ console.error=(...a)=>{oldError(...a);send('error',a)};
+ addEventListener('error',e=>send('error',[e.message+' (línea '+e.lineno+')']));
+ addEventListener('unhandledrejection',e=>send('error',[String(e.reason)]));
+ <\/script>`;
+ const doc = `<!doctype html><html><head><meta charset="utf-8"><style>${safe($("css").value)}</style></head><body>${$("html").value}${bridge}<script>${safe($("js").value)}<\/script></body></html>`;
+ $("preview").srcdoc = doc;
+ $("status").textContent = "Código ejecutado";
+}
+addEventListener("message", e=>{
+ if(!e.data || !e.data.labConsole) return;
+ const line = document.createElement("div");
+ line.className = e.data.type === "error" ? "error" : "";
+ line.textContent = (e.data.type === "error" ? "Error: " : e.data.type === "warn" ? "Aviso: " : "") + e.data.args.map(v=>typeof v==="object"?JSON.stringify(v):String(v)).join(" ");
+ $("console").appendChild(line); $("console").scrollTop=$("console").scrollHeight;
+});
+$("run").addEventListener("click",run);
+$("example").addEventListener("click",()=>{ $("html").value=starter.html; $("css").value=starter.css; $("js").value=starter.js; run(); });
+$("clear").addEventListener("click",()=>{ $("html").value=""; $("css").value=""; $("js").value=""; $("console").textContent=""; $("preview").srcdoc=""; $("status").textContent="Editor limpio"; });
+$("download").addEventListener("click",()=>{
+ const doc=`<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${$("css").value}</style></head><body>${$("html").value}<script>${$("js").value.replace(/<\/script/gi,"<\\/script")}<\/script></body></html>`;
+ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([doc],{type:"text/html"})); a.download="mi-proyecto.html"; a.click(); URL.revokeObjectURL(a.href);
+});
+run();
+</script>
+</body>
+</html>
